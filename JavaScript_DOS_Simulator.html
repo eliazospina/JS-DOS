@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript DOS Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            background: black;
+            color: #c0c0c0;
+            font-family: "Courier New", monospace;
+            font-size: 16px;
+        }
+        #screen {
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        #output {
+            white-space: pre-wrap;
+        }
+        .input-line {
+            display: flex;
+        }
+        .prompt {
+            white-space: nowrap;
+        }
+        #command {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #c0c0c0;
+            font: inherit;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+<div id="screen">
+    <div id="output">Microsoft(R) MS-DOS Simulator Version 6.22
+C:\&gt;</div>
+    <div class="input-line">
+        <span class="prompt">C:\&gt;</span>
+        <input type="text" id="command" autofocus autocomplete="off">
+    </div>
+</div>
+
+<script>
+    const output = document.getElementById("output");
+    const commandInput = document.getElementById("command");
+
+    let currentDirectory = "C:\\";
+
+    const fileSystem = {
+        "C:\\": [
+            "AUTOEXEC.BAT",
+            "COMMAND.COM",
+            "CONFIG.SYS",
+            "DOS",
+            "GAMES",
+            "README.TXT"
+        ],
+        "C:\\DOS": [
+            "EDIT.COM",
+            "FORMAT.COM",
+            "HELP.COM",
+            "TREE.COM"
+        ],
+        "C:\\GAMES": [
+            "DOOM.EXE",
+            "TETRIS.EXE",
+            "README.TXT"
+        ]
+    };
+
+    function print(text) {
+        output.innerHTML += text + "\n";
+    }
+
+    function getPrompt() {
+        return currentDirectory + ">";
+    }
+
+    function executeCommand(command) {
+        const originalCommand = command;
+        command = command.trim();
+
+        if (command === "") return;
+
+        print(getPrompt() + originalCommand);
+
+        const parts = command.split(" ");
+        const cmd = parts[0].toUpperCase();
+        const argument = parts.slice(1).join(" ");
+
+        switch (cmd) {
+            case "HELP":
+                print(`Available commands:
+
+DIR       List files and folders
+CD        Change directory
+CLS       Clear screen
+ECHO      Display text
+VER       Show DOS version
+DATE      Show current date
+TIME      Show current time
+TYPE      Display a text file
+MEM       Show memory information
+EXIT      Close simulator
+HELP      Show this help`);
+                break;
+
+            case "DIR":
+                const files = fileSystem[currentDirectory];
+
+                if (!files) {
+                    print("File not found.");
+                    break;
+                }
+
+                print(`Volume in drive C is DOS
+Directory of ${currentDirectory}
+`);
+
+                files.forEach(file => {
+                    print("    " + file);
+                });
+
+                print(`${files.length} File(s)`);
+                break;
+
+            case "CD":
+                changeDirectory(argument);
+                break;
+
+            case "CLS":
+                output.innerHTML = "";
+                break;
+
+            case "ECHO":
+                print(argument);
+                break;
+
+            case "VER":
+                print("MS-DOS Simulator Version 6.22");
+                break;
+
+            case "DATE":
+                print(new Date().toLocaleDateString());
+                break;
+
+            case "TIME":
+                print(new Date().toLocaleTimeString());
+                break;
+
+            case "MEM":
+                print(`655360 bytes total conventional memory
+612432 bytes available conventional memory`);
+                break;
+
+            case "TYPE":
+                typeFile(argument);
+                break;
+
+            case "EXIT":
+                print("Goodbye.");
+                commandInput.disabled = true;
+                break;
+
+            default:
+                print("'" + cmd + "' is not recognized as an internal or external command.");
+        }
+    }
+
+    function changeDirectory(dir) {
+        if (!dir || dir === ".") return;
+
+        dir = dir.toUpperCase();
+
+        if (dir === "..") {
+            if (currentDirectory !== "C:\\") {
+                currentDirectory = "C:\\";
+            }
+            return;
+        }
+
+        let newPath;
+
+        if (dir.startsWith("C:\\")) {
+            newPath = dir;
+        } else {
+            newPath = currentDirectory + dir;
+        }
+
+        if (fileSystem[newPath]) {
+            currentDirectory = newPath;
+        } else {
+            print("Invalid directory.");
+        }
+    }
+
+    function typeFile(filename) {
+        filename = filename.toUpperCase();
+
+        if (filename === "README.TXT") {
+            print(`This is a JavaScript MS-DOS Simulator.
+
+You can type commands such as:
+
+DIR
+CD DOS
+CD GAMES
+TYPE README.TXT
+CLS
+HELP
+
+Have fun!`);
+        } else {
+            print("File not found.");
+        }
+    }
+
+    commandInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            const command = commandInput.value;
+            executeCommand(command);
+            commandInput.value = "";
+            commandInput.focus();
+        }
+    });
+
+    document.addEventListener("click", function() {
+        commandInput.focus();
+    });
+</script>
+</body>
+</html>
